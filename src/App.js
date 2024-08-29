@@ -1,23 +1,16 @@
-import logo from './logo.svg';
-import './App.css';
+import BlogSection from './component/blog';
+import ElegantHeroSection from './component/home'
+import Navbar from './component/navBar';
+import ServicesSection from './component/servicios';
+import ContactForm from './component/contacto';
+import BlogPostPage from './component/blog/entrada';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+    <Navbar/>
+    
+    <BlogPostPage/>
     </div>
   );
 }
