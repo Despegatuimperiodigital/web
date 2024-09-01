@@ -4,14 +4,36 @@ import Navbar from './component/navBar';
 import ServicesSection from './component/servicios';
 import ContactForm from './component/contacto';
 import BlogPostPage from './component/blog/entrada';
+import Login from './component/login/login'
+import Register from './component/login/register'
+import Usuario from './component/login/usuario'
+import Panel_usuario from './component/login/panel_usuario'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 
 function App() {
   return (
+    <Router>
+<Navbar />
     <div>
-    <Navbar/>
     
-    <BlogPostPage/>
+    <Routes>
+      
+          <Route path="/" element={
+            <>
+              <ElegantHeroSection />
+              <ServicesSection />
+              <BlogSection />
+              <ContactForm />
+            </>
+          } />
+          <Route path="/blog/:id" element={<BlogPostPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/usuario" element={<Usuario />} />
+          <Route path="/panel-usuario" element={<Panel_usuario />} />
+          </Routes>
     </div>
+    </Router>
   );
 }
 

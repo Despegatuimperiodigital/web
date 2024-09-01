@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronDown } from "lucide-react"
+import { Link } from "react-router-dom"
 
 const navItems = [
   { 
     name: "Soluciones", 
     href: "#",
     subItems: [
-      { name: "Cloud Computing", href: "#" },
+      { name: "Mantenciones", href: "#" },
       { name: "Inteligencia Artificial", href: "#" },
       { name: "Big Data & Analytics", href: "#" },
       { name: "Ciberseguridad", href: "#" },
@@ -286,7 +287,7 @@ export default function Navbar() {
                 <li key={item.name} className="navbar-item">
                   {item.subItems ? (
                     <>
-                      <button 
+                      <div 
                         className="navbar-link"
                         onClick={() => handleDropdownToggle(index)}
                         aria-expanded={activeDropdown === index}
@@ -294,7 +295,7 @@ export default function Navbar() {
                       >
                         {item.name}
                         <ChevronDown size={16} style={{ marginLeft: '4px', verticalAlign: 'middle' }} />
-                      </button>
+                      </div>
                       <AnimatePresence>
                         {activeDropdown === index && (
                           <motion.div
@@ -322,9 +323,12 @@ export default function Navbar() {
               ))}
             </ul>
             <div className="navbar-buttons">
+            <Link to="/login">
               <button className="navbar-button navbar-button-ghost">
-                Iniciar sesión
+              Iniciar sesión 
+                
               </button>
+              </Link>
               <button className="navbar-button navbar-button-primary">
                 Empezar ahora
               </button>
@@ -357,8 +361,8 @@ export default function Navbar() {
                   ))}
                 </React.Fragment>
               ))}
-              <a href="#" className="navbar-mobile-link">Iniciar sesión</a>
-              <a href="#" className="navbar-mobile-link navbar-button-primary" style={{display: 'inline-block', marginTop: '20px', textAlign: 'center'}}>
+<Link to="/login" className="navbar-mobile-link">Iniciar sesión</Link>
+<a href="#" className="navbar-mobile-link navbar-button-primary" style={{display: 'inline-block', marginTop: '20px', textAlign: 'center'}}>
                 Empezar ahora
               </a>
             </motion.div>

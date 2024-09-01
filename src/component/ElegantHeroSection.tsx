@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { ArrowRight, Send, Sparkles, MessageSquare, ChevronDown, Check } from "lucide-react"
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Send, Sparkles, MessageSquare, ChevronDown, Check } from "lucide-react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 const businessChallenges = [
   { icon: "📊", title: "Optimizar procesos" },
@@ -11,7 +11,7 @@ const businessChallenges = [
   { icon: "🚀", title: "Escalar infraestructura" },
   { icon: "🧠", title: "Soluciones de IA" },
   { icon: "💡", title: "Innovación de productos" }
-]
+];
 
 const trustedCompanies = [
   { name: "TechNova", logo: "/placeholder.svg?height=30&width=100", industry: "Tecnología" },
@@ -20,48 +20,59 @@ const trustedCompanies = [
   { name: "HealthPulse", logo: "/placeholder.svg?height=30&width=100", industry: "Salud" },
   { name: "LogiPro", logo: "/placeholder.svg?height=30&width=100", industry: "Logística" },
   { name: "RetailFuture", logo: "/placeholder.svg?height=30&width=100", industry: "Comercio" }
-]
+];
 
 export default function ElegantHeroSection() {
-  const [userQuery, setUserQuery] = useState("")
-  const [conversation, setConversation] = useState<{ type: 'user' | 'bot', content: string }[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [showChat, setShowChat] = useState(false)
-  const [selectedChallenge, setSelectedChallenge] = useState("")
-  const chatEndRef = useRef<HTMLDivElement>(null)
+  const [userQuery, setUserQuery] = useState("");
+  const [conversation, setConversation] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [selectedChallenge, setSelectedChallenge] = useState("");
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [conversation])
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [conversation]);
 
-  const handleChallengeSelect = (challenge: string) => {
-    setSelectedChallenge(challenge)
-    setShowChat(true)
-    handleSubmit(challenge)
-  }
+  const handleChallengeSelect = (challenge) => {
+    setSelectedChallenge(challenge);
+    setShowChat(true);
+    handleSubmit(challenge);
+  };
 
-  const handleSubmit = (query: string) => {
+  const handleSubmit = async (query) => {
     if (query.trim()) {
-      setConversation(prev => [...prev, { type: 'user', content: query }])
-      setIsLoading(true)
-      setUserQuery("")
-      
-      setTimeout(() => {
-        const responses = [
-          `Excelente elección. Nuestra solución de IA Adaptativa está diseñada para abordar "${query}". ¿Le interesaría conocer cómo hemos ayudado a empresas a aumentar su eficiencia en un 30%?`,
-          `"${query}" es crucial en el panorama actual. Nuestro Análisis Predictivo ha permitido a clientes anticipar tendencias con un 85% de precisión. ¿Exploramos su aplicación en su sector?`,
-          `Su interés en "${query}" refleja visión. Nuestra Plataforma de Integración Cloud ha reducido costos de IT hasta en un 40%. ¿Le gustaría una demo personalizada?`,
-          `"${query}" es un desafío común. Nuestras Soluciones de Automatización han reducido errores en un 60% y aumentado productividad en un 25%. ¿Analizamos su potencial impacto?`,
-          `Enfocarse en "${query}" demuestra innovación. Nuestro Sistema de Gestión de Datos en Tiempo Real acelera decisiones un 50%. ¿Exploramos cómo podría darle ventaja competitiva?`
-        ]
-        const botResponse = responses[Math.floor(Math.random() * responses.length)]
-        setConversation(prev => [...prev, { type: 'bot', content: botResponse }])
-        setIsLoading(false)
-      }, 1500)
-    }
-  }
+      setConversation(prev => [...prev, { type: 'user', content: query }]);
+      setIsLoading(true);
+      setUserQuery("");
 
-  const titleWords = "Eleve su Visión Empresarial con CloudHub".split(" ")
+      try {
+        // Realiza la solicitud POST a tu API
+        const response = await fetch('http://localhost:4008/api/despega-ai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ searchText: query })
+        });
+
+        if (!response.ok) {
+          throw new Error('Error en la solicitud al servidor');
+        }
+
+        const data = await response.json();
+
+        // Actualiza la conversación con la respuesta del bot
+        setConversation(prev => [...prev, { type: 'bot', content: data.message }]);
+
+      } catch (error) {
+        console.error('Error:', error);
+        setConversation(prev => [...prev, { type: 'bot', content: 'Hubo un error al procesar su consulta. Intente nuevamente más tarde.' }]);
+      }
+
+      setIsLoading(false);
+    }
+  };
 
   return (
     <section className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
@@ -81,36 +92,12 @@ export default function ElegantHeroSection() {
           className="text-center space-y-4"
         >
           <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight overflow-hidden" style={{ fontFamily: "'Nunito', sans-serif" }}>
-            {titleWords.map((word, i) => (
-              <motion.span
-                key={i}
-                className="inline-block mr-2"
-                initial={{ opacity: 0, filter: "blur(10px)" }}
-                animate={{ 
-                  opacity: 1, 
-                  filter: "blur(0px)",
-                  y: [0, -5, 0],
-                  transition: {
-                    opacity: { duration: 1, delay: i * 0.2 },
-                    filter: { duration: 1, delay: i * 0.2 },
-                    y: {
-                      repeat: Infinity,
-                      repeatType: "reverse",
-                      duration: 2,
-                      delay: i * 0.1,
-                      ease: "easeInOut"
-                    }
-                  }
-                }}
-              >
-                {word}
-              </motion.span>
-            ))}
+            Eleve su Visión Empresarial con CloudHub
           </h1>
           <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: titleWords.length * 0.2 }}
+            transition={{ duration: 0.5, delay: 1 }}
             className="text-base md:text-xl text-blue-50 max-w-2xl mx-auto leading-relaxed"
             style={{ fontFamily: "'IBM Plex Sans', sans-serif" }}
           >
@@ -128,7 +115,7 @@ export default function ElegantHeroSection() {
             {!showChat ? (
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-800 text-center" style={{ fontFamily: "'Nunito', sans-serif" }}>
-                  ¿Qué desafío empresarial le gustaría abordar?
+                  ¿Qué desafío empresarial le gustaría abordar? hola 
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {businessChallenges.map((challenge, index) => (
@@ -147,7 +134,7 @@ export default function ElegantHeroSection() {
                 </div>
                 <div className="text-center space-y-3">
                   <p className="text-xs text-gray-700">
-                    ¿No encuentra su desafío específico? Descríbalo aquí:
+                    ¿No encuentra su desafío específico? Descríbalo aquí: hola
                   </p>
                   <form onSubmit={(e) => { e.preventDefault(); handleSubmit(userQuery); setShowChat(true); }} className="flex items-center space-x-2 max-w-md mx-auto">
                     <Input
@@ -255,5 +242,5 @@ export default function ElegantHeroSection() {
         </motion.div>
       </div>
     </section>
-  )
+  );
 }

@@ -93,7 +93,7 @@ export default function BlogPostPage() {
   };
 
   return (
-    <div className="blog-post-page">
+    <div className="blog-post-page" Style="padding-top:100px;">
       <motion.div 
         className="back-button"
         whileHover={{ scale: 1.05 }}
