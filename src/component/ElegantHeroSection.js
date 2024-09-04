@@ -7,7 +7,7 @@ import { Input } from "./ui/input";
 const businessChallenges = [
   { icon: "📊", title: "Optimizar procesos" },
   { icon: "🤝", title: "Experiencia del cliente" },
-  { icon: "🔒", title: "Seguridad de datos" },
+  { icon: "🔒", title: "Seguridad de datos hola " },
   { icon: "🚀", title: "Escalar infraestructura" },
   { icon: "🧠", title: "Soluciones de IA" },
   { icon: "💡", title: "Innovación de productos" }
@@ -48,7 +48,7 @@ export default function ElegantHeroSection() {
 
       try {
         // Realiza la solicitud POST a tu API
-        const response = await fetch('http://localhost:4008/api/despega-ai', {
+        const response = await fetch('http://localhost:3001/api/formulario', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -115,7 +115,7 @@ export default function ElegantHeroSection() {
             {!showChat ? (
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-800 text-center" style={{ fontFamily: "'Nunito', sans-serif" }}>
-                  ¿Qué desafío empresarial le gustaría abordar? hola 
+                  ¿Qué desafío empresarial le gustaría abordar?
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {businessChallenges.map((challenge, index) => (
@@ -134,7 +134,7 @@ export default function ElegantHeroSection() {
                 </div>
                 <div className="text-center space-y-3">
                   <p className="text-xs text-gray-700">
-                    ¿No encuentra su desafío específico? Descríbalo aquí: hola
+                    ¿No encuentra su desafío específico? Descríbalo aquí:
                   </p>
                   <form onSubmit={(e) => { e.preventDefault(); handleSubmit(userQuery); setShowChat(true); }} className="flex items-center space-x-2 max-w-md mx-auto">
                     <Input

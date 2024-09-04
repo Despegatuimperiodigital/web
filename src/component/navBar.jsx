@@ -4,6 +4,7 @@ import { ChevronDown } from "lucide-react"
 import { Link } from "react-router-dom"
 
 const navItems = [
+  /*
   { 
     name: "Soluciones", 
     href: "#",
@@ -17,6 +18,7 @@ const navItems = [
   { name: "Industrias", href: "#" },
   { name: "Recursos", href: "#" },
   { name: "Nosotros", href: "#" },
+   */
 ]
 
 export default function Navbar() {
@@ -280,10 +282,12 @@ export default function Navbar() {
         <nav className={`navbar ${isScrolled ? 'navbar-scrolled' : ''}`}>
           <div className="navbar-container">
             <a href="/" className="navbar-logo">
-              <span className="animated-background">CloudHub</span>
+              <span className="animated-background">cloudHUB</span>
             </a>
+
             <ul className="navbar-menu" ref={dropdownRef}>
               {navItems.map((item, index) => (
+                
                 <li key={item.name} className="navbar-item">
                   {item.subItems ? (
                     <>

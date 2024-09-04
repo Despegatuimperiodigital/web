@@ -406,30 +406,41 @@ export default function ElegantHeroSection() {
     setShowChat(true)
     handleSubmit(challenge)
   }
-
-  const handleSubmit = (query) => {
+  const handleSubmit = async (query) => {
     if (query.trim()) {
-      setConversation(prev => [...prev, { type: 'user', content: query }])
-      setIsLoading(true)
-      setUserQuery("")
-      
-      setTimeout(() => {
-        const responses = [
-          `Excelente elección. Nuestra solución de IA Adaptativa está diseñada para abordar "${query}". ¿Le interesaría conocer cómo hemos ayudado a empresas a aumentar su eficiencia en un 30%?`,
-          `"${query}" es crucial en el panorama actual. Nuestro Análisis Predictivo ha permitido a clientes anticipar tendencias con un 85% de precisión. ¿Exploramos su aplicación en su sector?`,
-          `Su interés en "${query}" refleja visión. Nuestra Plataforma de Integración Cloud ha reducido costos de IT hasta en un 40%. ¿Le gustaría una demo personalizada?`,
-          `"${query}" es un desafío común. Nuestras Soluciones de Automatización han reduc
-
-ido errores en un 60% y aumentado productividad en un 25%. ¿Analizamos su potencial impacto?`,
-          `Enfocarse en "${query}" demuestra innovación. Nuestro Sistema de Gestión de Datos en Tiempo Real acelera decisiones un 50%. ¿Exploramos cómo podría darle ventaja competitiva?`
-        ]
-        const botResponse = responses[Math.floor(Math.random() * responses.length)]
-        setConversation(prev => [...prev, { type: 'bot', content: botResponse }])
-        setIsLoading(false)
-      }, 1500)
+      setConversation(prev => [...prev, { type: 'user', content: query }]);
+      setIsLoading(true);
+      setUserQuery("");
+  
+      try {
+        // Realiza la solicitud POST a tu API
+        const response = await fetch('http://localhost:4008/api/despega-ai/crear', { // Asegúrate de que esta URL es la correcta para tu API
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ searchText: query })
+        });
+        
+        console.log(response)
+        if (!response.ok) {
+          throw new Error('Error en la solicitud al servidor');
+        }
+  
+        const data = await response.json();
+  
+        // Actualiza la conversación con la respuesta del bot
+        setConversation(prev => [...prev, { type: 'bot', content: data.message }]);
+  
+      } catch (error) {
+        console.error('Error:', error);
+        setConversation(prev => [...prev, { type: 'bot', content: 'Hubo un error al procesar su consulta. Intente nuevamente más tarde.' }]);
+      }
+  
+      setIsLoading(false);
     }
   }
-
+  
   const titleWords = "Eleve su Visión Empresarial con CloudHub".split(" ")
 
   return (
