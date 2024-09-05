@@ -1,220 +1,64 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Calendar, User, Tag, Volume2, VolumeX, ThumbsUp, MessageSquare, Share2, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { ArrowRight, Calendar, User, Tag, Volume2, VolumeX } from 'lucide-react';
 import useSound from 'use-sound';
+import Music from './music.mp3'
 
-// Simulación de datos de un post de blog
-const blogPost = {
-  title: "Innovaciones en IA para Empresas en 2023",
-  content: `
-    <p>La Inteligencia Artificial (IA) está revolucionando el mundo empresarial a un ritmo sin precedentes. En 2023, estamos presenciando avances significativos que están transformando la forma en que las empresas operan, toman decisiones y se relacionan con sus clientes.</p>
-    
-    <h2>1. IA Generativa en la Creación de Contenido</h2>
-    <p>Una de las innovaciones más impactantes es el uso de IA generativa para la creación de contenido. Herramientas como GPT-3 están permitiendo a las empresas producir textos, imágenes y hasta código de manera automatizada, ahorrando tiempo y recursos.</p>
-    
-    <h2>2. Análisis Predictivo Avanzado</h2>
-    <p>Los algoritmos de IA están mejorando drásticamente en la predicción de tendencias de mercado, comportamiento del consumidor y riesgos potenciales. Esto permite a las empresas tomar decisiones más informadas y estratégicas.</p>
-    
-    <h2>3. Automatización Inteligente de Procesos</h2>
-    <p>La automatización robótica de procesos (RPA) combinada con IA está llevando la eficiencia operativa a nuevos niveles. Tareas complejas que antes requerían intervención humana ahora pueden ser manejadas por sistemas inteligentes.</p>
-    
-    <h2>Conclusión</h2>
-    <p>La IA está dejando de ser una tecnología futurista para convertirse en una herramienta esencial en el presente de las empresas. Aquellas que sepan aprovechar estas innovaciones estarán mejor posicionadas para liderar sus respectivos mercados en los años venideros.</p>
-  `,
-  date: "15 Jun 2023",
-  author: "María González",
-  category: "Inteligencia Artificial",
-  image: "/placeholder.svg?height=400&width=800",
-  likes: 127,
-  comments: 23
-};
-
-// Lista de canciones de ejemplo
-const playlist = [
-  { title: "Ambient Melody", artist: "CloudHub Music", src: "/ambient-melody.mp3" },
-  { title: "Tech Groove", artist: "CloudHub Music", src: "/tech-groove.mp3" },
-  { title: "AI Symphony", artist: "CloudHub Music", src: "/ai-symphony.mp3" },
+const blogPosts = [
+  {
+    title: "Innovaciones en IA para Empresas en 2023",
+    excerpt: "Descubra cómo las últimas innovaciones en IA están transformando el panorama empresarial...",
+    date: "15 Jun 2023",
+    author: "María González",
+    category: "Inteligencia Artificial",
+    image: "https://z-p3-scontent.fscl29-1.fna.fbcdn.net/o1/v/t0/f1/m340/genai_m4_lla_ncg_v3:upload_img_80175273_08_29_2024_08_51_35_027758_4628620993048329551.jpeg?_nc_ht=z-p3-scontent.fscl29-1.fna.fbcdn.net&_nc_cat=106&ccb=9-4&oh=00_AYAYOEhp2OscVpPpvIFar8kxGXbGPY-AJ127PNQbJgVgdQ&oe=66D271A3&_nc_sid=5b3566?height=200&width=300"
+  },
+  {
+    title: "Guía de Microservicios para Startups",
+    excerpt: "Aprenda cómo implementar una arquitectura de microservicios eficiente en su startup...",
+    date: "22 May 2023",
+    author: "Carlos Rodríguez",
+    category: "Arquitectura de Software",
+    image: "https://z-p3-scontent.fscl29-1.fna.fbcdn.net/o1/v/t0/f1/m258/upload_img_2745826_08_29_2024_08_48_33_338419_6672666805160491856.jpeg?_nc_ht=z-p3-scontent.fscl29-1.fna.fbcdn.net&_nc_cat=104&ccb=9-4&oh=00_AYCAA0p3uXZID2OLfTvZRHBKYe7oEu2VgNyMsNCOXFo2Uw&oe=66D2653D&_nc_sid=5b3566?height=200&width=300"
+  },
+  {
+    title: "Seguridad en la Nube: Mejores Prácticas",
+    excerpt: "Proteja sus activos digitales con estas estrategias probadas de seguridad en la nube...",
+    date: "7 Apr 2023",
+    author: "Ana Martínez",
+    category: "Seguridad",
+    image: "https://z-p3-scontent.fscl29-1.fna.fbcdn.net/o1/v/t0/f1/m340/genai_m4_ldc_pnb_v3:upload_img_42651702_08_29_2024_08_58_04_647633_300758316709215497.jpeg?_nc_ht=z-p3-scontent.fscl29-1.fna.fbcdn.net&_nc_cat=101&ccb=9-4&oh=00_AYCiwejuphOKpzD-1KoVwoGkZSUs3cfxMCWIa5oGC0fLDA&oe=66D25CDD&_nc_sid=5b3566?height=200&width=300"
+  },
+  {
+    title: "El Futuro del E-commerce con Integración Omnicanal",
+    excerpt: "Explore cómo la integración omnicanal está redefiniendo la experiencia de compra en línea...",
+    date: "18 Mar 2023",
+    author: "Javier López",
+    category: "E-commerce",
+    image: "https://z-p3-scontent.fscl29-1.fna.fbcdn.net/o1/v/t0/f1/m257/upload_img_18678706_08_29_2024_08_58_47_162968_2532303705320648567.jpeg?_nc_ht=z-p3-scontent.fscl29-1.fna.fbcdn.net&_nc_cat=108&ccb=9-4&oh=00_AYAEPlngf0NxGNpMoIOUWE_aX1A3zG7N_R4l_ao6KG3P5Q&oe=66D2733C&_nc_sid=5b3566?height=200&width=300"
+  }
 ];
 
-export default function BlogPostPage() {
+export default function BlogSection() {
+  const [expandedPost, setExpandedPost] = useState(null);
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [volume, setVolume] = useState(0.5);
-  const [isLiked, setIsLiked] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState(0);
-  const audioRef = useRef(null);
 
-  const [playHoverSound] = useSound('/hover.mp3', {
+  const [playHoverSound] = useSound(Music, {
     volume: volume,
     soundEnabled: isSoundEnabled,
   });
 
-  const [playLikeSound] = useSound('/like.mp3', {
-    volume: volume,
-    soundEnabled: isSoundEnabled,
-  });
-
-  useEffect(() => {
-    // Simular carga de contenido
-    setTimeout(() => {
-      document.querySelector('.blog-content').innerHTML = blogPost.content;
-    }, 100);
-  }, []);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
-
-  const handleLike = () => {
-    setIsLiked(!isLiked);
+  const handleMouseEnter = () => {
     if (isSoundEnabled) {
-      playLikeSound();
+      playHoverSound();
     }
-  };
-
-  const togglePlay = () => {
-    if (audioRef.current.paused) {
-      audioRef.current.play();
-    } else {
-      audioRef.current.pause();
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  const playNext = () => {
-    setCurrentTrack((prevTrack) => (prevTrack + 1) % playlist.length);
-  };
-
-  const playPrevious = () => {
-    setCurrentTrack((prevTrack) => (prevTrack - 1 + playlist.length) % playlist.length);
   };
 
   return (
-    <div className="blog-post-page">
-      <motion.div 
-        className="back-button"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <ArrowLeft size={20} />
-        <span>Volver al Blog</span>
-      </motion.div>
-
-      <div className="content-wrapper">
-        <article className="blog-post">
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            {blogPost.title}
-          </motion.h1>
-
-          <div className="blog-meta">
-            <span><Calendar size={14} /> {blogPost.date}</span>
-            <span><User size={14} /> {blogPost.author}</span>
-            <span><Tag size={14} /> {blogPost.category}</span>
-          </div>
-
-          <motion.div 
-            className="blog-image"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <img src={blogPost.image} alt={blogPost.title} />
-          </motion.div>
-
-          <motion.div 
-            className="blog-content"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            {/* Contenido del post se cargará aquí */}
-          </motion.div>
-
-          <div className="blog-actions">
-            <motion.button 
-              className={`action-button ${isLiked ? 'liked' : ''}`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={handleLike}
-            >
-              <ThumbsUp size={20} />
-              <span>{blogPost.likes + (isLiked ? 1 : 0)}</span>
-            </motion.button>
-            <motion.button 
-              className="action-button"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <MessageSquare size={20} />
-              <span>{blogPost.comments}</span>
-            </motion.button>
-            <motion.button 
-              className="action-button"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <Share2 size={20} />
-              <span>Compartir</span>
-            </motion.button>
-          </div>
-        </article>
-
-        <aside className="music-player">
-          <h3>Música Ambiental</h3>
-          <div className="current-track">
-            <img src="/placeholder.svg?height=60&width=60" alt="Album Cover" />
-            <div>
-              <p className="track-title">{playlist[currentTrack].title}</p>
-              <p className="track-artist">{playlist[currentTrack].artist}</p>
-            </div>
-          </div>
-          <div className="player-controls">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={playPrevious}
-            >
-              <SkipBack size={24} />
-            </motion.button>
-            <motion.button
-              className="play-pause"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={togglePlay}
-            >
-              {isPlaying ? <Pause size={24} /> : <Play size={24} />}
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={playNext}
-            >
-              <SkipForward size={24} />
-            </motion.button>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="volume-slider"
-          />
-          <audio
-            ref={audioRef}
-            src={playlist[currentTrack].src}
-            onEnded={playNext}
-          />
-        </aside>
-      </div>
-
+    <section className="blog-section">
+      <h2>Nuestro Blog</h2>
+      <p className="blog-intro">Explore nuestros últimos artículos sobre tecnología, innovación y estrategias empresariales.</p>
       <div className="sound-controls">
         <label className="sound-toggle">
           <input
@@ -236,48 +80,63 @@ export default function BlogPostPage() {
           />
         )}
       </div>
-
+      <div className="blog-grid">
+        {blogPosts.map((post, index) => (
+          <motion.div 
+            key={index}
+            className="blog-card"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
+            whileHover={{ scale: 1.03 }}
+            onClick={() => setExpandedPost(expandedPost === index ? null : index)}
+            onMouseEnter={handleMouseEnter}
+          >
+            <div className="blog-image">
+              <img src={post.image} alt={post.title} />
+            </div>
+            <div className="blog-content">
+              <h3>{post.title}</h3>
+              <div className="blog-meta">
+                <span><Calendar size={14} /> {post.date}</span>
+                <span><User size={14} /> {post.author}</span>
+                <span><Tag size={14} /> {post.category}</span>
+              </div>
+              <AnimatePresence>
+                {expandedPost === index && (
+                  <motion.div
+                    className="blog-excerpt"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <p>{post.excerpt}</p>
+                    <motion.button
+                      className="read-more"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Leer más <ArrowRight size={16} />
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        ))}
+      </div>
       <style jsx>{`
-        .blog-post-page {
-          padding: 4rem 2rem;
+        .blog-section {
+          padding: 6rem 2rem;
           background-color: #0a0a0a;
           color: #e0e0e0;
-          min-height: 100vh;
         }
 
-        .content-wrapper {
-          display: flex;
-          gap: 2rem;
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .back-button {
-          display: inline-flex;
-          align-items: center;
-          color: #F33F31;
-          font-size: 1rem;
-          margin-bottom: 2rem;
-          cursor: pointer;
-          transition: color 0.3s ease;
-        }
-
-        .back-button:hover {
-          color: #E77171;
-        }
-
-        .back-button span {
-          margin-left: 0.5rem;
-        }
-
-        .blog-post {
-          flex: 1;
-          max-width: 800px;
-        }
-
-        h1 {
+        h2 {
           font-size: 2.5rem;
           margin-bottom: 1rem;
+          text-align: center;
           color: #ffffff;
           font-weight: 300;
           letter-spacing: 1px;
@@ -286,142 +145,35 @@ export default function BlogPostPage() {
           -webkit-text-fill-color: transparent;
         }
 
-        .blog-meta {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 1rem;
-          margin-bottom: 2rem;
-          font-size: 0.9rem;
-          color: #b0b0b0;
-        }
-
-        .blog-meta span {
-          display: flex;
-          align-items: center;
-          gap: 0.3rem;
-        }
-
-        .blog-image {
-          margin-bottom: 2rem;
-          border-radius: 20px;
-          overflow: hidden;
-        }
-
-        .blog-image img {
-          width: 100%;
-          height: auto;
-          object-fit: cover;
-        }
-
-        .blog-content {
-          font-size: 1.1rem;
-          line-height: 1.8;
-          color: #d0d0d0;
-        }
-
-        .blog-content h2 {
-          font-size: 1.8rem;
-          margin-top: 2rem;
-          margin-bottom: 1rem;
-          color: #ffffff;
-        }
-
-        .blog-content p {
-          margin-bottom: 1.5rem;
-        }
-
-        .blog-actions {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 3rem;
-          padding-top: 2rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .action-button {
-          display: flex;
-          align-items: center;
-          background: none;
-          border: none;
-          color: #b0b0b0;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: color 0.3s ease;
-        }
-
-        .action-button:hover, .action-button.liked {
-          color: #F33F31;
-        }
-
-        .action-button span {
-          margin-left: 0.5rem;
-        }
-
-        .music-player {
-          width: 300px;
-          background-color: rgba(255, 255, 255, 0.05);
-          border-radius: 20px;
-          padding: 1.5rem;
-          position: sticky;
-          top: 2rem;
-          height: fit-content;
-        }
-
-        .music-player h3 {
+        .blog-intro {
+          text-align: center;
+          max-width: 800px;
+          margin: 0 auto 2rem;
           font-size: 1.2rem;
-          margin-bottom: 1rem;
-          color: #ffffff;
-        }
-
-        .current-track {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          margin-bottom: 1rem;
-        }
-
-        .current-track img {
-          width: 60px;
-          height: 60px;
-          border-radius: 10px;
-        }
-
-        .track-title {
-          font-weight: bold;
-          color: #ffffff;
-        }
-
-        .track-artist {
-          font-size: 0.9rem;
           color: #b0b0b0;
         }
 
-        .player-controls {
-          display: flex;
-          justify-content: center;
-          gap: 1rem;
-          margin-bottom: 1rem;
-        }
-
-        .player-controls button {
-          background: none;
-          border: none;
-          color: #F33F31;
-          cursor: pointer;
-        }
-
-        .play-pause {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background-color: rgba(243, 63, 49, 0.2);
+        .sound-controls {
           display: flex;
           align-items: center;
           justify-content: center;
+          margin-bottom: 2rem;
+          gap: 1rem;
+        }
+
+        .sound-toggle {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          color: #F33F31;
+        }
+
+        .sound-toggle input {
+          display: none;
         }
 
         .volume-slider {
-          width: 100%;
+          width: 100px;
           -webkit-appearance: none;
           background: rgba(255, 255, 255, 0.1);
           outline: none;
@@ -441,65 +193,115 @@ export default function BlogPostPage() {
           box-shadow: -407px 0 0 400px #F33F31;
         }
 
-        .sound-controls {
-          position: fixed;
-          bottom: 2rem;
-          right: 2rem;
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          background-color: rgba(0, 0, 0, 0.5);
-          padding: 0.5rem 1rem;
+        .blog-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 2rem;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .blog-card {
+          background-color: rgba(255, 255, 255, 0.03);
           border-radius: 20px;
+          overflow: hidden;
+          transition: all 0.3s ease;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          cursor: pointer;
         }
 
-        .sound-toggle {
+        .blog-card:hover {
+          background-color: rgba(255, 255, 255, 0.05);
+          box-shadow: 0 15px 40px rgba(243, 63, 49, 0.1);
+        }
+
+        .blog-image {
+          height: 200px;
+          overflow: hidden;
+        }
+
+        .blog-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.3s ease;
+        }
+
+        .blog-card:hover .blog-image img {
+          transform: scale(1.05);
+        }
+
+        .blog-content {
+          padding: 1.5rem;
+        }
+
+        .blog-content h3 {
+          font-size: 1.3rem;
+          margin-bottom: 1rem;
+          color: #ffffff;
+          font-weight: 600;
+        }
+
+        .blog-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1rem;
+          margin-bottom: 1rem;
+          font-size: 0.9rem;
+          color: #b0b0b0;
+        }
+
+        .blog-meta span {
           display: flex;
           align-items: center;
-          cursor: pointer;
+          gap: 0.3rem;
+        }
+
+        .blog-excerpt p {
+          font-size: 0.9rem;
+          color: #b0b0b0;
+          line-height: 1.6;
+          margin-bottom: 1rem;
+        }
+
+        .read-more {
+          display: flex;
+          align-items: center;
+          background: none;
+          border: none;
           color: #F33F31;
+          font-size: 0.9rem;
+          cursor: pointer;
+          padding: 0;
+          transition: color 0.3s ease;
         }
 
-        .sound-toggle input {
-          display: none;
+        .read-more:hover {
+          color: #E77171;
         }
 
-        @media (max-width: 1024px) {
-          .content-wrapper {
-            flex-direction: column;
-          }
-
-          .music-player {
-            width: 100%;
-            position: static;
-            margin-top: 2rem;
-          }
+        .read-more svg {
+          margin-left: 0.5rem;
         }
 
         @media (max-width: 768px) {
-          .blog-post-page {
-            padding: 3rem 1.5rem;
+          .blog-section {
+            padding: 4rem 1.5rem;
           }
 
-          h1 {
+          h2 {
             font-size: 2rem;
           }
 
-          .blog-content {
+          .blog-intro {
             font-size: 1rem;
           }
 
-          .blog-actions {
-            flex-wrap: wrap;
-            gap: 1rem;
-          }
-
-          .sound-controls {
-            bottom: 1rem;
-            right: 1rem;
+          .blog-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
-    </div>
+    </section>
   );
 }
