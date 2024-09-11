@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useParams, useNavigate } from 'react-router-dom'; // Importar useParams y useNavigate
+
 import { ArrowLeft, Calendar, User, Tag, Volume2, VolumeX, ThumbsUp, MessageSquare, Share2, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import useSound from 'use-sound';
 import Interrestellar from '../music/interestellar.mp3'
@@ -38,12 +40,17 @@ const playlist = [
 ];
 
 export default function BlogPostPage() {
+  const { id } = useParams(); // Obtener el ID del post desde la URL
+  const navigate = useNavigate(); // Para volver al blog
+
+  const [post, setPost] = useState(null); // Estado para el post
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [volume, setVolume] = useState(0.5);
   const [isLiked, setIsLiked] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(0);
   const audioRef = useRef(null);
+
 
   const [playHoverSound] = useSound('/hover.mp3', {
     volume: volume,
@@ -56,11 +63,23 @@ export default function BlogPostPage() {
   });
 
   useEffect(() => {
-    // Simular carga de contenido
-    setTimeout(() => {
-      document.querySelector('.blog-content').innerHTML = blogPost.content;
-    }, 100);
-  }, []);
+    // Hacer la solicitud para obtener el post específico por ID
+    const fetchPost = async () => {
+      try {
+        console.log(id)
+        const response = await fetch(`http://localhost:4010/api/posts/${id}`);
+        if (!response.ok) {
+          throw new Error('Error al obtener el post');
+        }
+        const data = await response.json();
+        setPost(data); // Guardar los datos del post
+      } catch (error) {
+        console.error('Error al cargar el post:', error);
+      }
+    };
+
+    fetchPost();
+  }, [id]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -83,6 +102,9 @@ export default function BlogPostPage() {
     }
     setIsPlaying(!isPlaying);
   };
+  if (!post) {
+    return <p>Cargando post...</p>;
+  }
 
   const playNext = () => {
     setCurrentTrack((prevTrack) => (prevTrack + 1) % playlist.length);
@@ -94,78 +116,77 @@ export default function BlogPostPage() {
 
   return (
     <div className="blog-post-page" Style="padding-top:100px;">
-      <motion.div 
-        className="back-button"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <ArrowLeft size={20} />
-        <span>Volver al Blog</span>
-      </motion.div>
+    <motion.div 
+      className="back-button"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={() => navigate(-1)} // Volver al blog anterior
+    >
+      <ArrowLeft size={20} />
+      <span>Volver al Blog</span>
+    </motion.div>
 
-      <div className="content-wrapper">
-        <article className="blog-post">
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+    <div className="content-wrapper">
+      <article className="blog-post">
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {post.title}
+        </motion.h1>
+
+        <div className="blog-meta">
+          <span><Calendar size={14} /> {new Date(post.date).toLocaleDateString()}</span>
+          <span><User size={14} /> {post.author}</span>
+          <span><Tag size={14} /> {post.category}</span>
+        </div>
+
+        <motion.div 
+          className="blog-image"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <img src={post.image} alt={post.title} />
+        </motion.div>
+
+        <motion.div 
+          className="blog-content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          dangerouslySetInnerHTML={{ __html: post.content }} // Mostrar el contenido HTML
+        />
+
+        <div className="blog-actions">
+          <motion.button 
+            className={`action-button ${isLiked ? 'liked' : ''}`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleLike}
           >
-            {blogPost.title}
-          </motion.h1>
-
-          <div className="blog-meta">
-            <span><Calendar size={14} /> {blogPost.date}</span>
-            <span><User size={14} /> {blogPost.author}</span>
-            <span><Tag size={14} /> {blogPost.category}</span>
-          </div>
-
-          <motion.div 
-            className="blog-image"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
+            <ThumbsUp size={20} />
+            <span>{post.likes + (isLiked ? 1 : 0)}</span>
+          </motion.button>
+          <motion.button 
+            className="action-button"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
-            <img src={blogPost.image} alt={blogPost.title} />
-          </motion.div>
-
-          <motion.div 
-            className="blog-content"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            <MessageSquare size={20} />
+            <span>{post.comments}</span>
+          </motion.button>
+          <motion.button 
+            className="action-button"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
-            {/* Contenido del post se cargará aquí */}
-          </motion.div>
-
-          <div className="blog-actions">
-            <motion.button 
-              className={`action-button ${isLiked ? 'liked' : ''}`}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={handleLike}
-            >
-              <ThumbsUp size={20} />
-              <span>{blogPost.likes + (isLiked ? 1 : 0)}</span>
-            </motion.button>
-            <motion.button 
-              className="action-button"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <MessageSquare size={20} />
-              <span>{blogPost.comments}</span>
-            </motion.button>
-            <motion.button 
-              className="action-button"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              <Share2 size={20} />
-              <span>Compartir</span>
-            </motion.button>
-          </div>
-        </article>
-
+            <Share2 size={20} />
+            <span>Compartir</span>
+          </motion.button>
+        </div>
+      </article>
         <aside className="music-player">
           <h3>Música Ambiental</h3>
           <div className="current-track">

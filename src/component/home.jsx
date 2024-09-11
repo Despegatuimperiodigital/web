@@ -24,6 +24,7 @@ const styles = `
     justify-content: center;
     padding: 1rem;
     overflow: hidden;
+    z-index:999;
   }
 
   .background-image {
@@ -40,10 +41,11 @@ const styles = `
   }
 
   .background-overlay {
-    position: absolute;
-    inset: 0;
-    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4));
-  }
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4));
+  z-index: 5; /* El fondo debe estar por detrás del título */
+}
 
   .content-wrapper {
     max-width: 64rem;
@@ -64,15 +66,18 @@ const styles = `
     margin-top: 1rem;
   }
 
-  .hero-title {
-    font-family: 'Nunito', sans-serif;
-    font-size: 1.875rem;
-    line-height: 2.25rem;
-    font-weight: 700;
-    color: white;
-    letter-spacing: -0.025em;
-    overflow: hidden;
-  }
+ .hero-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  overflow: hidden;
+  z-index: 10000; /* Asegurar que el título esté en la capa superior */
+  position: bock; /* Garantizar que no sea afectado por otras posiciones absolutas */
+  margin-top: 2rem; /* Asegurar que el título tenga un margen visible */
+
+}
 
   @media (min-width: 768px) {
     .hero-title {
@@ -336,6 +341,9 @@ const styles = `
     background-color: #F33F31;
     color: white;
   }
+    .chat-message-bot p {
+  white-space: pre-wrap;
+}
 
   .more-cases-button svg {
     width: 1rem;
@@ -461,16 +469,11 @@ export default function ElegantHeroSection() {
             transition={{ duration: 0.5 }}
             className="text-center space-y-4"
           >
-            <h1 className="hero-title">
+            <h1 className="hero-title" Style="margin-top:56px">
               {titleWords.map((word, i) => (
                 <motion.span
                   key={i}
-                  initial={{ opacity: 0, filter: "blur(10px)" }}
-                  animate={{ 
-                    opacity: 1, 
-                    filter: "blur(0px)",
-                    y: [0, -5, 0],
-                  }}
+                 
                   transition={{
                     opacity: { duration: 1, delay: i * 0.2 },
                     filter: { duration: 1, delay: i * 0.2 },
@@ -593,7 +596,7 @@ export default function ElegantHeroSection() {
               </>
             )}
           </motion.div>
-
+{/*
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -623,6 +626,7 @@ export default function ElegantHeroSection() {
               </Button>
             </div>
           </motion.div>
+        */}
         </div>
       </section>
     </>

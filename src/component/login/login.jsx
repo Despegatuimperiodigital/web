@@ -10,18 +10,45 @@ export default function Component() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(''); // Para manejar errores de autenticación
 
   const [playHoverSound] = useSound('/hover.mp3', { volume: 0.5 });
   const [playClickSound] = useSound('/click.mp3', { volume: 0.5 });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simular proceso de inicio de sesión
-    setTimeout(() => {
+    setErrorMessage(''); // Limpiar mensajes de error
+
+    try {
+      // Llamada al backend para iniciar sesión
+      const response = await fetch('http://localhost:4001/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al iniciar sesión');
+      }
+
+      // Si todo va bien, maneja el token (guardarlo en localStorage, etc.)
+      console.log('Token recibido:', data.token);
+      localStorage.setItem('token', data.token); // Guardar token en localStorage
+      alert('Inicio de sesión exitoso');
+    } catch (error) {
+      setErrorMessage(error.message); // Mostrar mensaje de error
+      console.error('Error al iniciar sesión:', error);
+    } finally {
       setIsLoading(false);
-      console.log('Iniciar sesión con:', email, password, 'Recordar:', rememberMe);
-    }, 2000);
+    }
   };
 
   const handleMouseEnter = () => {
@@ -88,6 +115,7 @@ export default function Component() {
               <span>Recuérdame</span>
             </label>
           </div>
+          {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>} {/* Mostrar error si lo hay */}
           <motion.button 
             className="login-button"
             whileHover={{ scale: 1.05 }}

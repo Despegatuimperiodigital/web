@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Calendar, User, Tag, Volume2, VolumeX } from 'lucide-react';
 import useSound from 'use-sound';
 import Music from './music.mp3'
+import { useNavigate } from 'react-router-dom'; // Importar useNavigate
+
 
 const blogPosts = [
   {
@@ -40,24 +42,67 @@ const blogPosts = [
 ];
 
 export default function BlogSection() {
+
   const [expandedPost, setExpandedPost] = useState(null);
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [volume, setVolume] = useState(0.5);
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [playHoverSound] = useSound(Music, {
     volume: volume,
     soundEnabled: isSoundEnabled,
   });
+  const handlePostClick = (id) => {
+    // Redirige a la página del post específico usando su ID
+    navigate(`/blog/${id}`);
+  };
 
-  const handleMouseEnter = () => {
-    if (isSoundEnabled) {
-      playHoverSound();
+  const navigate = useNavigate(); // Hook para redirigir
+// Función para obtener los posts desde la API
+useEffect(() => {
+  const fetchPosts = async () => {
+    try {
+      const response = await fetch('http://localhost:4010/api/posts'); // URL de tu API
+      
+      if (!response.ok) {
+      
+        throw new Error('Error al obtener los posts');
+      }
+      const data = await response.json(); // Parsear los datos en JSON
+      setBlogPosts(data); // Guardar los posts en el estado
+      setLoading(false);  // Desactivar el estado de carga
+    console.log(data)
+    } catch (err) {
+      console.error('Error al obtener los posts:', err);
+      setError('No se pudieron cargar los posts');
+      setLoading(false);  // Desactivar el estado de carga en caso de error
     }
   };
 
+  fetchPosts();
+}, []);
+const handleMouseEnter = () => {
+  if (isSoundEnabled) {
+    playHoverSound();
+  }
+};
+
+  // Mostrar un mensaje mientras los posts están cargando
+  if (loading) {
+    return <p>Cargando posts...</p>;
+  }
+
+  // Mostrar un mensaje si hay un error al cargar los posts
+  if (error) {
+    return <p>{error}</p>;
+  }
+
+
   return (
     <section className="blog-section">
-      <h2>Nuestro Blog</h2>
+     <h2>Nuestro Blog</h2>
       <p className="blog-intro">Explore nuestros últimos artículos sobre tecnología, innovación y estrategias empresariales.</p>
       <div className="sound-controls">
         <label className="sound-toggle">
@@ -83,45 +128,24 @@ export default function BlogSection() {
       <div className="blog-grid">
         {blogPosts.map((post, index) => (
           <motion.div 
-            key={index}
+            key={post._id}
             className="blog-card"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
             whileHover={{ scale: 1.03 }}
-            onClick={() => setExpandedPost(expandedPost === index ? null : index)}
-            onMouseEnter={handleMouseEnter}
+            onClick={() => handlePostClick(post._id)}  // Al hacer clic, redirigir a la página del post
           >
             <div className="blog-image">
-              <img src={post.image} alt={post.title} />
+              <img src={ "http://localhost:4010" +post.image} alt={post.title} />
             </div>
             <div className="blog-content">
               <h3>{post.title}</h3>
               <div className="blog-meta">
-                <span><Calendar size={14} /> {post.date}</span>
+                <span><Calendar size={14} /> {new Date(post.date).toLocaleDateString()}</span>
                 <span><User size={14} /> {post.author}</span>
                 <span><Tag size={14} /> {post.category}</span>
               </div>
-              <AnimatePresence>
-                {expandedPost === index && (
-                  <motion.div
-                    className="blog-excerpt"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <p>{post.excerpt}</p>
-                    <motion.button
-                      className="read-more"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      Leer más <ArrowRight size={16} />
-                    </motion.button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </motion.div>
         ))}

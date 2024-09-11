@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, User, ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import useSound from 'use-sound';
 
-export default function Component() {
+export default function RegisterComponent() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,22 +13,57 @@ export default function Component() {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const [playHoverSound] = useSound('/hover.mp3', { volume: 0.5 });
   const [playClickSound] = useSound('/click.mp3', { volume: 0.5 });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage(''); // Limpiar mensajes anteriores
+    setSuccessMessage(''); // Limpiar mensajes anteriores
+
     if (password !== confirmPassword) {
-      alert('Las contraseñas no coinciden');
+      setErrorMessage('Las contraseñas no coinciden');
       return;
     }
+
     setIsLoading(true);
-    // Simular proceso de registro
-    setTimeout(() => {
+
+    try {
+      // Llamada al backend para registrar el usuario
+      console.log(email,password)
+      const response = await fetch('http://localhost:4001/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          appId:'2',
+          email,
+          password,
+          role: 'admin', // Asigna el rol aquí o permite que el backend lo maneje
+        }),
+      });
+      
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al registrar el usuario');
+      }
+
+      // Mostrar mensaje de éxito
+      setSuccessMessage('¡Registro exitoso! Ahora puedes iniciar sesión.');
       setIsLoading(false);
-      console.log('Registrar con:', name, email, password, 'Términos aceptados:', agreeTerms);
-    }, 2000);
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      console.error('Error al registrar:', error);
+      setErrorMessage(error.message || 'Hubo un error al intentar registrarse');
+      setIsLoading(false);
+    }
   };
 
   const handleMouseEnter = () => {
@@ -52,6 +87,8 @@ export default function Component() {
         transition={{ duration: 0.5 }}
       >
         <h2>Crear Cuenta</h2>
+        {errorMessage && <p className="error-message">{errorMessage}</p>}
+        {successMessage && <p className="success-message">{successMessage}</p>}
         <form onSubmit={handleSubmit}>
           <div className="input-group">
             <User size={20} />
@@ -190,6 +227,7 @@ export default function Component() {
       >
         {isSoundEnabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
       </motion.button>
+    
       <style jsx>{`
         .register-container {
           display: flex;
