@@ -1,22 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Circle, MoreVertical, Plus, Search, ChevronLeft, ChevronRight, X, Calendar, Link, Image as ImageIcon, XCircle, MessageSquare, BarChart2, PieChart, TrendingUp, Clock } from 'lucide-react';
-
-// Datos de ejemplo para las tareas
-const initialTasks = [
-  { id: 1, title: "Desarrollar nueva función", description: "Implementar la funcionalidad de autenticación con OAuth", status: "pending", dueDate: "2023-06-30", priority: "Alta", tags: ["Desarrollo", "Seguridad"], link: "https://example.com/oauth-docs", images: ["/placeholder.svg?height=100&width=100"], comments: [
-    { id: 1, author: "Juan Pérez", content: "Necesitamos revisar los requisitos de seguridad antes de implementar esto.", date: "2023-06-25" },
-    { id: 2, author: "Ana García", content: "Estoy de acuerdo. Programemos una reunión para discutirlo.", date: "2023-06-26" }
-  ] },
-  { id: 2, title: "Revisar pull requests", description: "Revisar y aprobar las solicitudes de fusión pendientes en GitHub", status: "pending", dueDate: "2023-06-25", priority: "Media", tags: ["Desarrollo", "Colaboración"], link: "", images: [], comments: [] },
-  { id: 3, title: "Actualizar documentación", description: "Actualizar la documentación de la API para reflejar los cambios recientes", status: "completed", dueDate: "2023-06-20", priority: "Baja", tags: ["Documentación"], link: "https://example.com/api-docs", images: ["/placeholder.svg?height=100&width=100", "/placeholder.svg?height=100&width=100"], comments: [
-    { id: 1, author: "Carlos Rodríguez", content: "He comenzado a trabajar en esto. Debería estar listo mañana.", date: "2023-06-19" }
-  ] },
-  { id: 4, title: "Reunión con el equipo", description: "Discutir el progreso del proyecto y planificar el próximo sprint", status: "completed", dueDate: "2023-06-15", priority: "Alta", tags: ["Reunión", "Planificación"], link: "", images: [], comments: [] },
-  { id: 5, title: "Optimizar rendimiento", description: "Identificar y resolver cuellos de botella en el rendimiento de la aplicación", status: "pending", dueDate: "2023-07-05", priority: "Media", tags: ["Desarrollo", "Optimización"], link: "https://example.com/performance-tips", images: ["/placeholder.svg?height=100&width=100"], comments: [] },
-];
-
-const tagOptions = ["Desarrollo", "Seguridad", "Colaboración", "Documentación", "Reunión", "Planificación", "Optimización", "Diseño", "Testing"];
+import axios from 'axios';
 
 // Componente para el gráfico de barras
 const BarChart = ({ data }) => {
@@ -125,7 +110,7 @@ const PieChart2 = ({ data }) => {
 };
 
 export default function UserDashboard() {
-  const [tasks, setTasks] = useState(initialTasks);
+  const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [tasksPerPage] = useState(5);
@@ -137,6 +122,7 @@ export default function UserDashboard() {
     dueDate: new Date().toISOString().split('T')[0],
     priority: 'Media',
     status: 'pending',
+    assignedTo: '',
     tags: [],
     link: '',
     images: [],
@@ -147,7 +133,57 @@ export default function UserDashboard() {
   const [newComment, setNewComment] = useState('');
   const [showDashboard, setShowDashboard] = useState(false);
 
-  const filteredTasks = tasks.filter(task => {
+  useEffect(() => {
+    getTasks();
+  }, []);
+
+  const getTasks = async () => {
+    try {
+      const response = await axios.get('http://localhost:4005/api/tickets');
+      setTasks(response.data.tickets);
+      console.log(response.data.tickets)
+    } catch (error) {
+      console.error('Error al obtener tareas:', error);
+    }
+  };
+
+  const createTask = async (newTask) => {
+    try {
+      const response = await axios.post('http://localhost:4005/api/tickets', newTask);
+      setTasks([...tasks, response.data]);
+    } catch (error) {
+      console.error('Error al crear tarea:', error);
+    }
+  };
+
+  const getTaskById = async (id) => {
+    try {
+      const response = await axios.get(`http://localhost:4005/api/tickets/${id}`);
+      setSelectedTask(response.data);
+    } catch (error) {
+      console.error('Error al obtener tarea por ID:', error);
+    }
+  };
+
+  const updateTask = async (updatedTask) => {
+    try {
+      const response = await axios.put(`http://localhost:4005/api/tickets/${updatedTask.id}`, updatedTask);
+      setTasks(tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task)));
+    } catch (error) {
+      console.error('Error al actualizar tarea:', error);
+    }
+  };
+
+  const deleteTask = async (id) => {
+    try {
+      const response = await axios.delete(`http://localhost:4005/api/tickets/${id}`);
+      setTasks(tasks.filter((task) => task.id !== id));
+    } catch (error) {
+      console.error('Error al eliminar tarea:', error);
+    }
+  };
+
+  const filteredTasks = tasks.filter((task) => {
     if (filter === 'all') return true;
     return task.status === filter;
   });
@@ -156,10 +192,10 @@ export default function UserDashboard() {
   const indexOfFirstTask = indexOfLastTask - tasksPerPage;
   const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
 
-  const completeTask = (id) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, status: 'completed' } : task
-    ));
+  const completeTask = async (id) => {
+    const updatedTask = tasks.find((task) => task.id === id);
+    updatedTask.status = 'completed';
+    await updateTask(updatedTask);
   };
 
   const handlePageChange = (pageNumber) => {
@@ -187,6 +223,7 @@ export default function UserDashboard() {
       dueDate: new Date().toISOString().split('T')[0],
       priority: 'Media',
       status: 'pending',
+      assignedTo: '',
       tags: [],
       link: '',
       images: [],
@@ -197,36 +234,30 @@ export default function UserDashboard() {
 
   const handleNewTaskChange = (e) => {
     const { name, value } = e.target;
-    setNewTask(prevTask => ({
-      ...prevTask,
-      [name]: value
-    }));
+    setNewTask((prevTask) => ({ ...prevTask, [name]: value }));
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
+      setErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
     }
   };
 
   const handleTagToggle = (tag) => {
-    setNewTask(prevTask => ({
+    setNewTask((prevTask) => ({
       ...prevTask,
       tags: prevTask.tags.includes(tag)
-        ? prevTask.tags.filter(t => t !== tag)
+        ? prevTask.tags.filter((t) => t !== tag)
         : [...prevTask.tags, tag]
     }));
   };
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    const newImages = files.map(file => URL.createObjectURL(file));
-    setNewTask(prevTask => ({
-      ...prevTask,
-      images: [...prevTask.images, ...newImages]
-    }));
+    const newImages = files.map((file) => URL.createObjectURL(file));
+    setNewTask((prevTask) => ({ ...prevTask, images: [...prevTask.images, ...newImages] }));
   };
 
   const removeImage = (index) => {
-    setNewTask(prevTask => ({
+    setNewTask((prevTask) => ({
       ...prevTask,
       images: prevTask.images.filter((_, i) => i !== index)
     }));
@@ -259,14 +290,10 @@ export default function UserDashboard() {
     }
   };
 
-  const addNewTask = (e) => {
+  const addNewTask = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      const taskToAdd = {
-        ...newTask,
-        id: tasks.length + 1,
-      };
-      setTasks([...tasks, taskToAdd]);
+      await createTask(newTask);
       closeAddTaskForm();
     }
   };
@@ -276,7 +303,7 @@ export default function UserDashboard() {
 
     const comment = {
       id: selectedTask.comments.length + 1,
-      author: "Usuario Actual", // Esto debería ser reemplazado por el nombre del usuario autenticado
+      author: 'Usuario Actual', // Esto debería ser reemplazado por el nombre del usuario autenticado
       content: newComment,
       date: new Date().toISOString().split('T')[0]
     };
@@ -286,30 +313,11 @@ export default function UserDashboard() {
       comments: [...selectedTask.comments, comment]
     };
 
-    setTasks(tasks.map(task => 
-      task.id === selectedTask.id ? updatedTask : task
-    ));
+    updateTask(updatedTask);
 
     setSelectedTask(updatedTask);
     setNewComment('');
   };
-
-  // Datos para los gráficos del dashboard
-  const taskStatusData = [
-    { label: 'Pendientes', value: tasks.filter(t => t.status === 'pending').length },
-    { label: 'Completadas', value: tasks.filter(t => t.status === 'completed').length },
-  ];
-
-  const taskPriorityData = [
-    { label: 'Alta', value: tasks.filter(t => t.priority === 'Alta').length, color: '#F44336' },
-    { label: 'Media', value: tasks.filter(t => t.priority === 'Media').length, color: '#FF9800' },
-    { label: 'Baja', value: tasks.filter(t => t.priority === 'Baja').length, color: '#4CAF50' },
-  ];
-
-  const tasksByTagData = tagOptions.map(tag => ({
-    label: tag,
-    value: tasks.filter(t => t.tags.includes(tag)).length
-  }));
 
   return (
     <div className="user-dashboard" Style="padding-top:110px;">
@@ -325,11 +333,25 @@ export default function UserDashboard() {
         <aside className="dashboard-sidebar">
           <nav>
             <ul>
-              <li><a href="#" className={!showDashboard ? "active" : ""} onClick={() => setShowDashboard(false)}>Tareas</a></li>
-              <li><a href="#" className={showDashboard ? "active" : ""} onClick={() => setShowDashboard(true)}>Dashboard</a></li>
-              <li><a href="#">Proyectos</a></li>
-              <li><a href="#">Calendario</a></li>
-              <li><a href="#">Informes</a></li>
+              <li>
+                <a href="#" className={!showDashboard ? 'active' : ''} onClick={() => setShowDashboard(false)}>
+                  Tareas
+                </a>
+              </li>
+              <li>
+                <a href="#" className={showDashboard ? 'active' : ''} onClick={() => setShowDashboard(true)}>
+                  Dashboard
+                </a>
+              </li>
+              <li>
+                <a href="#">Proyectos</a>
+              </li>
+              <li>
+                <a href="#">Calendario</a>
+              </li>
+              <li>
+                <a href="#">Informes</a>
+              </li>
             </ul>
           </nav>
         </aside>
@@ -340,34 +362,59 @@ export default function UserDashboard() {
               <h2>Dashboard de Estadísticas</h2>
               <div className="dashboard-grid">
                 <div className="dashboard-card">
-                  <h3><BarChart2 size={20} /> Estado de Tareas</h3>
-                  <BarChart data={taskStatusData} />
+                  <h3>
+                    <BarChart2 size={20} /> Estado de Tareas
+                  </h3>
+                  <BarChart
+                    data={[
+                      { label: 'Pendientes', value: tasks.filter((t) => t.status === 'pending').length },
+                      { label: 'Completadas', value: tasks.filter((t) => t.status === 'completed').length }
+                    ]}
+                  />
                 </div>
                 <div className="dashboard-card">
-                  <h3><PieChart size={20} /> Prioridad de Tareas</h3>
-                  <PieChart2 data={taskPriorityData} />
+                  <h3>
+                    <PieChart size={20} /> Prioridad de Tareas
+                  </h3>
+                  <PieChart2
+                    data={[
+                      { label: 'Alta', value: tasks.filter((t) => t.priority === 'Alta').length, color: '#F44336' },
+                      { label: 'Media', value: tasks.filter((t) => t.priority === 'Media').length, color: '#FF9800' },
+                      { label: 'Baja', value: tasks.filter((t) => t.priority === 'Baja').length, color: '#4CAF50' }
+                    ]}
+                  />
                 </div>
                 <div className="dashboard-card">
-                  <h3><TrendingUp size={20} /> Tareas por Etiqueta</h3>
-                  <BarChart data={tasksByTagData} />
+                  <h3>
+                    <TrendingUp size={20} /> Tareas por Etiqueta
+                  </h3>
+                  <BarChart
+                    data={[
+                      { label: 'Desarrollo', value: tasks.filter((t) => t.tags.includes('Desarrollo')).length },
+                      { label: 'Seguridad', value: tasks.filter((t) => t.tags.includes('Seguridad')).length },
+                      { label: 'Colaboración', value: tasks.filter((t) => t.tags.includes('Colaboración')).length }
+                    ]}
+                  />
                 </div>
                 <div className="dashboard-card">
-                  <h3><Clock size={20} /> Resumen</h3>
+                  <h3>
+                    <Clock size={20} /> Resumen
+                  </h3>
                   <div className="summary-stats">
                     <div className="stat-item">
                       <span className="stat-value">{tasks.length}</span>
                       <span className="stat-label">Total de Tareas</span>
                     </div>
                     <div className="stat-item">
-                      <span className="stat-value">{tasks.filter(t => t.status === 'completed').length}</span>
+                      <span className="stat-value">{tasks.filter((t) => t.status === 'completed').length}</span>
                       <span className="stat-label">Tareas Completadas</span>
                     </div>
                     <div className="stat-item">
-                      <span className="stat-value">{tasks.filter(t => t.status === 'pending').length}</span>
+                      <span className="stat-value">{tasks.filter((t) => t.status === 'pending').length}</span>
                       <span className="stat-label">Tareas Pendientes</span>
                     </div>
                     <div className="stat-item">
-                      <span className="stat-value">{tasks.reduce((sum, task) => sum + task.comments.length, 0)}</span>
+                      <span className="stat-value">{tasks.reduce((sum, t) => sum + t.comments.length, 0)}</span>
                       <span className="stat-label">Total de Comentarios</span>
                     </div>
                   </div>
@@ -383,8 +430,8 @@ export default function UserDashboard() {
                     <Search size={20} />
                     <input type="text" placeholder="Buscar tareas..." />
                   </div>
-                  <select 
-                    value={filter} 
+                  <select
+                    value={filter}
                     onChange={(e) => setFilter(e.target.value)}
                     className="task-filter"
                   >
@@ -405,9 +452,9 @@ export default function UserDashboard() {
               </div>
 
               <ul className="tasks-list">
-                {currentTasks.map(task => (
-                  <motion.li 
-                    key={task.id} 
+                {currentTasks.map((task) => (
+                  <motion.li
+                    key={task.id}
                     className={`task-item ${task.status}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -417,8 +464,8 @@ export default function UserDashboard() {
                       {task.status === 'completed' ? (
                         <CheckCircle size={24} className="completed" />
                       ) : (
-                        <Circle 
-                          size={24} 
+                        <Circle
+                          size={24}
                           className="pending"
                           onClick={() => completeTask(task.id)}
                         />
@@ -427,11 +474,7 @@ export default function UserDashboard() {
                     <div className="task-info" onClick={() => openTaskDetails(task)}>
                       <h3>{task.title}</h3>
                       <p>Fecha límite: {task.dueDate}</p>
-                      <div className="task-tags">
-                        {task.tags.map(tag => (
-                          <span key={tag} className="task-tag">{tag}</span>
-                        ))}
-                      </div>
+                      
                       {task.link && (
                         <a href={task.link} target="_blank" rel="noopener noreferrer" className="task-link">
                           <Link size={16} />
@@ -462,16 +505,16 @@ export default function UserDashboard() {
               </ul>
 
               <div className="pagination">
-                <button 
-                  onClick={() => handlePageChange(currentPage - 1)} 
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                   className="pagination-btn"
                 >
                   <ChevronLeft size={20} />
                 </button>
                 <span>{currentPage}</span>
-                <button 
-                  onClick={() => handlePageChange(currentPage + 1)} 
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
                   disabled={indexOfLastTask >= filteredTasks.length}
                   className="pagination-btn"
                 >
@@ -485,13 +528,13 @@ export default function UserDashboard() {
 
       <AnimatePresence>
         {selectedTask && (
-          <motion.div 
+          <motion.div
             className="task-details-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div 
+            <motion.div
               className="task-details"
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -501,10 +544,18 @@ export default function UserDashboard() {
                 <X size={24} />
               </button>
               <h2>{selectedTask.title}</h2>
-              <p><strong>Descripción:</strong> {selectedTask.description}</p>
-              <p><strong>Estado:</strong> {selectedTask.status === 'completed' ? 'Completada' : 'Pendiente'}</p>
-              <p><strong>Fecha límite:</strong> {selectedTask.dueDate}</p>
-              <p><strong>Prioridad:</strong> {selectedTask.priority}</p>
+              <p>
+                <strong>Descripción:</strong> {selectedTask.description}
+              </p>
+              <p>
+                <strong>Estado:</strong> {selectedTask.status === 'completed' ? 'Completada' : 'Pendiente'}
+              </p>
+              <p>
+                <strong>Fecha límite:</strong> {selectedTask.dueDate}
+              </p>
+              <p>
+                <strong>Prioridad:</strong> {selectedTask.priority}
+              </p>
               {selectedTask.link && (
                 <p>
                   <strong>Enlace:</strong>{' '}
@@ -514,8 +565,10 @@ export default function UserDashboard() {
                 </p>
               )}
               <div className="task-tags">
-                {selectedTask.tags.map(tag => (
-                  <span key={tag} className="task-tag">{tag}</span>
+                {selectedTask.tags.map((tag) => (
+                  <span key={tag} className="task-tag">
+                    {tag}
+                  </span>
                 ))}
               </div>
               {selectedTask.images.length > 0 && (
@@ -532,7 +585,7 @@ export default function UserDashboard() {
                 <h3>Comentarios:</h3>
                 {selectedTask.comments.length > 0 ? (
                   <ul className="comments-list">
-                    {selectedTask.comments.map(comment => (
+                    {selectedTask.comments.map((comment) => (
                       <li key={comment.id} className="comment">
                         <div className="comment-header">
                           <strong>{comment.author}</strong>
@@ -561,13 +614,13 @@ export default function UserDashboard() {
 
       <AnimatePresence>
         {isAddingTask && (
-          <motion.div 
+          <motion.div
             className="task-details-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <motion.div 
+            <motion.div
               className="task-details new-task-form"
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -598,7 +651,7 @@ export default function UserDashboard() {
                     value={newTask.description}
                     onChange={handleNewTaskChange}
                     className={errors.description ? 'error' : ''}
-                  ></textarea>
+                  />
                   {errors.description && <span className="error-message">{errors.description}</span>}
                 </div>
                 <div className="form-group">
@@ -646,7 +699,7 @@ export default function UserDashboard() {
                 <div className="form-group">
                   <label>Etiquetas:</label>
                   <div className="tags-container">
-                    {tagOptions.map(tag => (
+                    {['Desarrollo', 'Seguridad', 'Colaboración'].map((tag) => (
                       <button
                         key={tag}
                         type="button"
@@ -707,8 +760,10 @@ export default function UserDashboard() {
                       </p>
                     )}
                     <div className="preview-tags">
-                      {newTask.tags.map(tag => (
-                        <span key={tag} className="task-tag">{tag}</span>
+                      {newTask.tags.map((tag) => (
+                        <span key={tag} className="task-tag">
+                          {tag}
+                        </span>
                       ))}
                     </div>
                     {newTask.images.length > 0 && (
@@ -723,7 +778,9 @@ export default function UserDashboard() {
                     )}
                   </div>
                 </div>
-                <button type="submit" className="submit-btn">Agregar Tarea</button>
+                <button type="submit" className="submit-btn">
+                  Agregar Tarea
+                </button>
               </form>
             </motion.div>
           </motion.div>

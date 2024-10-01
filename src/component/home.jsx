@@ -422,7 +422,7 @@ export default function ElegantHeroSection() {
   
       try {
         // Realiza la solicitud POST a tu API
-        const response = await fetch('http://localhost:4008/api/despega-ai/crear', { // Asegúrate de que esta URL es la correcta para tu API
+        const response = await fetch('https://api.cloudhub.cl/api/despega-ai/crear', { // Asegúrate de que esta URL es la correcta para tu API
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
