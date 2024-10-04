@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import useSound from 'use-sound';
+import { useNavigate } from 'react-router-dom';
 
 export default function Component() {
   const [email, setEmail] = useState('');
@@ -11,6 +12,7 @@ export default function Component() {
   const [isSoundEnabled, setIsSoundEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(''); // Para manejar errores de autenticación
+  const navigate = useNavigate();
 
   const [playHoverSound] = useSound('/hover.mp3', { volume: 0.5 });
   const [playClickSound] = useSound('/click.mp3', { volume: 0.5 });
@@ -43,6 +45,7 @@ export default function Component() {
       console.log('Token recibido:', data.token);
       localStorage.setItem('token', data.token); // Guardar token en localStorage
       alert('Inicio de sesión exitoso');
+      navigate('/panel-usuario'); 
     } catch (error) {
       setErrorMessage(error.message); // Mostrar mensaje de error
       console.error('Error al iniciar sesión:', error);

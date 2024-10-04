@@ -149,7 +149,16 @@ export default function UserDashboard() {
 
   const createTask = async (newTask) => {
     try {
-      const response = await axios.post('http://localhost:4005/api/tickets', newTask);
+      const ticketData = {
+        title: newTask.title,
+        description: newTask.description,
+        priority:  newTask.priority === 'Baja' ? 'low' : 
+        newTask.priority === 'Media' ? 'medium' : 
+        newTask.priority === 'Alta' ? 'high' : 'medium',
+        assignedTo: newTask.assignedTo || null,
+        dueDate: newTask.dueDate || null,
+      };
+      const response = await axios.post('http://localhost:4005/api/tickets', {ticket: ticketData});
       setTasks([...tasks, response.data]);
     } catch (error) {
       console.error('Error al crear tarea:', error);
@@ -159,7 +168,7 @@ export default function UserDashboard() {
   const getTaskById = async (id) => {
     try {
       const response = await axios.get(`http://localhost:4005/api/tickets/${id}`);
-      setSelectedTask(response.data);
+      setSelectedTask(response.data.ticket);
     } catch (error) {
       console.error('Error al obtener tarea por ID:', error);
     }
@@ -481,19 +490,20 @@ export default function UserDashboard() {
                           Enlace
                         </a>
                       )}
-                      {task.images.length > 0 && (
+{task.images && task.images.length > 0 && (
                         <div className="task-images">
                           <ImageIcon size={16} />
                           {task.images.length} {task.images.length === 1 ? 'imagen' : 'imágenes'}
                         </div>
-                      )}
+                      )} 
+
                       <div className="task-comments">
                         <MessageSquare size={16} />
-                        {task.comments.length} {task.comments.length === 1 ? 'comentario' : 'comentarios'}
-                      </div>
+                        {task?.comments?.length} {task?.comments?.length === 1 ? 'comentario' : 'comentarios'}
+                      </div>  
                     </div>
                     <div className="task-priority">
-                      <span className={`priority-tag ${task.priority.toLowerCase()}`}>
+                      <span className={`priority-tag ${task.priority}`}>
                         {task.priority}
                       </span>
                     </div>
@@ -543,18 +553,18 @@ export default function UserDashboard() {
               <button className="close-btn" onClick={closeTaskDetails}>
                 <X size={24} />
               </button>
-              <h2>{selectedTask.title}</h2>
+              <h2>{selectedTask.ticket.title}</h2>
               <p>
-                <strong>Descripción:</strong> {selectedTask.description}
+                <strong>Descripción:</strong> {selectedTask.ticket.description}
               </p>
               <p>
-                <strong>Estado:</strong> {selectedTask.status === 'completed' ? 'Completada' : 'Pendiente'}
+                <strong>Estado:</strong> {selectedTask.ticket.status === 'completed' ? 'Completada' : 'Pendiente'}
               </p>
               <p>
-                <strong>Fecha límite:</strong> {selectedTask.dueDate}
+                <strong>Fecha límite:</strong> {new Date (selectedTask.ticket.dueDate).toLocaleDateString()}
               </p>
               <p>
-                <strong>Prioridad:</strong> {selectedTask.priority}
+                <strong>Prioridad:</strong> {selectedTask.ticket.priority}
               </p>
               {selectedTask.link && (
                 <p>
@@ -565,13 +575,13 @@ export default function UserDashboard() {
                 </p>
               )}
               <div className="task-tags">
-                {selectedTask.tags.map((tag) => (
+                {(selectedTask?.tags || []).map((tag) => (
                   <span key={tag} className="task-tag">
                     {tag}
                   </span>
                 ))}
               </div>
-              {selectedTask.images.length > 0 && (
+              {selectedTask?.images?.length > 0 && (
                 <div className="task-images-preview">
                   <h3>Imágenes:</h3>
                   <div className="images-grid">
@@ -583,7 +593,7 @@ export default function UserDashboard() {
               )}
               <div className="task-comments-section">
                 <h3>Comentarios:</h3>
-                {selectedTask.comments.length > 0 ? (
+                {selectedTask?.comments?.length > 0 ? (
                   <ul className="comments-list">
                     {selectedTask.comments.map((comment) => (
                       <li key={comment.id} className="comment">
