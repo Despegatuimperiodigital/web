@@ -158,7 +158,16 @@ export default function UserDashboard() {
         assignedTo: newTask.assignedTo || null,
         dueDate: newTask.dueDate || null,
       };
-      const response = await axios.post('http://localhost:4005/api/tickets', {ticket: ticketData});
+      // Obtén el token de localStorage o del contexto donde lo estés guardando
+      const token = localStorage.getItem('token');
+      const response = await axios.post('http://localhost:4005/api/tickets', 
+        { ticket: ticketData }, 
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, 
+          },
+        }
+      );
       setTasks([...tasks, response.data]);
     } catch (error) {
       console.error('Error al crear tarea:', error);
@@ -177,7 +186,7 @@ export default function UserDashboard() {
   const updateTask = async (updatedTask) => {
     try {
       const response = await axios.put(`http://localhost:4005/api/tickets/${updatedTask.id}`, updatedTask);
-      setTasks(tasks.map((task) => (task.id === updatedTask.id ? updatedTask : task)));
+      setTasks(tasks.map((task) => (task.id === updatedTask.id ? response.data : task)));
     } catch (error) {
       console.error('Error al actualizar tarea:', error);
     }
@@ -214,6 +223,7 @@ export default function UserDashboard() {
   const openTaskDetails = (task) => {
     setSelectedTask(task);
   };
+  console.log('selectedTask:', selectedTask);
 
   const closeTaskDetails = () => {
     setSelectedTask(null);
@@ -307,25 +317,42 @@ export default function UserDashboard() {
     }
   };
 
-  const addComment = () => {
+  const addComment = async () => {
     if (newComment.trim() === '') return;
 
     const comment = {
-      id: selectedTask.comments.length + 1,
+      //id: selectedTask.comments.length + 1,
       author: 'Usuario Actual', // Esto debería ser reemplazado por el nombre del usuario autenticado
       content: newComment,
       date: new Date().toISOString().split('T')[0]
     };
 
-    const updatedTask = {
-      ...selectedTask,
-      comments: [...selectedTask.comments, comment]
-    };
+    const token = localStorage.getItem('token');
+    console.log('Token recibido:', token);
+    console.log('Id del ticket:', selectedTask._id); 
 
-    updateTask(updatedTask);
+    try {
+      const response = await axios.post(`http://localhost:4005/api/comments/${selectedTask._id}`, comment,
+        {
+          headers: {
+              Authorization: `Bearer ${token}` // Agregar el token a las cabeceras
+          }
+      }
+      );
+     console.log('Comentario add:', response.data);
+      const newCommentData = response.data;
+      // Actualiar tarea
+      const updatedTask = {
+        ...selectedTask,
+        comments: [...(selectedTask.comments || []), newCommentData], 
+      };
 
-    setSelectedTask(updatedTask);
-    setNewComment('');
+      //updateTask(updatedTask);
+      setSelectedTask(updatedTask);
+      setNewComment('');
+    } catch (error) {
+      console.error('Error al agregar comentario:', error);
+    }  
   };
 
   return (
@@ -595,8 +622,8 @@ export default function UserDashboard() {
                 <h3>Comentarios:</h3>
                 {selectedTask?.comments?.length > 0 ? (
                   <ul className="comments-list">
-                    {selectedTask.comments.map((comment) => (
-                      <li key={comment.id} className="comment">
+                    {selectedTask.comments.map((comment, index) => (
+                      <li key={comment.id || index } className="comment">
                         <div className="comment-header">
                           <strong>{comment.author}</strong>
                           <span>{comment.date}</span>
