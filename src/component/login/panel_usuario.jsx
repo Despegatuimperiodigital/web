@@ -474,7 +474,13 @@ export default function UserDashboard() {
                     <div className="task-info" onClick={() => openTaskDetails(task)}>
                       <h3>{task.title}</h3>
                       <p>Fecha límite: {task.dueDate}</p>
-                      
+                      <div className="task-tags">
+                        {task.tags.map((tag) => (
+                          <span key={tag} className="task-tag">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                       {task.link && (
                         <a href={task.link} target="_blank" rel="noopener noreferrer" className="task-link">
                           <Link size={16} />

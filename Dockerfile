@@ -2,6 +2,7 @@
 FROM docker.io/library/node:18-alpine
 
 ENV NODE_ENV development
+ENV PORT 3003
 
 # Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /app
@@ -15,8 +16,8 @@ RUN npm install
 # Copiar el resto de los archivos del proyecto al contenedor
 COPY . .
 
-# Construir   
-CMD [ "npm", "start" ]
+# Exponer el puerto 3003
+EXPOSE 3003
 
-EXPOSE 3000
-# Exponer el puerto en el que se servirá la aplicación (normalmente 3000 para React)
+# Comando para iniciar la aplicación
+CMD ["npm", "start"]
