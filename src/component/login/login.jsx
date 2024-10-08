@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import useSound from 'use-sound';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext  } from '../../context';
 
 export default function Component() {
+  const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,6 +46,9 @@ export default function Component() {
       // Si todo va bien, maneja el token (guardarlo en localStorage, etc.)
       console.log('Token recibido:', data.token);
       localStorage.setItem('token', data.token); // Guardar token en localStorage
+      
+      // llamar al login del context
+      login(data.token);
       alert('Inicio de sesión exitoso');
       navigate('/panel-usuario'); 
     } catch (error) {
