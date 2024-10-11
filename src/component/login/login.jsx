@@ -50,7 +50,7 @@ export default function Component() {
       // llamar al login del context
       login(data.token);
       alert('Inicio de sesión exitoso');
-      navigate('/panel-usuario'); 
+      navigate('/usuario'); //navigate('/panel-usuario');
     } catch (error) {
       setErrorMessage(error.message); // Mostrar mensaje de error
       console.error('Error al iniciar sesión:', error);

@@ -2,15 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Mail, User, ArrowRight, Volume2, VolumeX, Search, Edit, Trash2, Plus, Calendar, Phone, MapPin, X, Briefcase, Info, Check, Send } from 'lucide-react';
 import useSound from 'use-sound';
+import axios from 'axios';
 
 export default function Component() {
-  const [users, setUsers] = useState([
-    { id: 1, name: 'Alice Johnson', email: 'alice@example.com', role: 'Admin', status: 'Active', phone: '+1 234 567 890', location: 'New York', dateJoined: '2023-01-15', company: 'Tech Corp', additionalFields: {} },
-    { id: 2, name: 'Bob Smith', email: 'bob@example.com', role: 'User', status: 'Inactive', phone: '+1 987 654 321', location: 'Los Angeles', dateJoined: '2023-02-20', company: 'Design Co', additionalFields: {} },
-    { id: 3, name: 'Charlie Brown', email: 'charlie@example.com', role: 'Editor', status: 'Active', phone: '+1 456 789 012', location: 'Chicago', dateJoined: '2023-03-10', company: 'Media Inc', additionalFields: {} },
-    { id: 4, name: 'Diana Prince', email: 'diana@example.com', role: 'User', status: 'Active', phone: '+1 789 012 345', location: 'Houston', dateJoined: '2023-04-05', company: 'Finance Ltd', additionalFields: {} },
-    { id: 5, name: 'Ethan Hunt', email: 'ethan@example.com', role: 'Admin', status: 'Active', phone: '+1 321 654 987', location: 'Miami', dateJoined: '2023-05-22', company: 'Security Systems', additionalFields: {} },
-  ]);
+  const [users, setUsers] = useState([]); // aqui inicia vacío
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [editingUser, setEditingUser] = useState(null);
@@ -26,64 +21,170 @@ export default function Component() {
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
 
+
   const [playHoverSound] = useSound('/hover.mp3', { volume: 0.5 });
   const [playClickSound] = useSound('/click.mp3', { volume: 0.5 });
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.company.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = Array.isArray(users) ? users.filter(user => 
+    (user.name && user.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.role && user.role.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.location && user.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (user.company && user.company.toLowerCase().includes(searchTerm.toLowerCase()))
+  ) : [];
 
   const pageSize = 5;
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   useEffect(() => {
-    if (selectAll) {
-      setSelectedUsers(paginatedUsers.map(user => user.id));
-    } else {
-      setSelectedUsers([]);
-    }
-  }, [selectAll, paginatedUsers]);
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:4001/api/user', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }); 
+        console.log('respuesta de usuarios:', response.data.users);
+        setUsers(response.data.users);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchUsers();
+  }, []);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
 
   const handleEditUser = (user) => {
+    console.log('usuario a editar:', user);
     setEditingUser(user);
-    setAdditionalFields(Object.entries(user.additionalFields).map(([key, value]) => ({ key, value })));
+    const additionalFields = user.additionalFields && typeof user.additionalFields === 'object' 
+    ? Object.entries(user.additionalFields).map(([key, value]) => ({ key, value })) 
+    : [];
+
+    setAdditionalFields(additionalFields);
     setIsAddUserOpen(true);
   };
 
-  const handleDeleteUser = (userId) => {
-    setUsers(users.filter(user => user.id !== userId));
-    setSelectedUsers(selectedUsers.filter(id => id !== userId));
+  const handleDeleteUser = async (userId) => {
+    console.log("Usuario ID a eliminar:", userId); 
+    const token = localStorage.getItem('token');
+    try {
+      await axios.delete(`http://localhost:4001/api/user/${userId}`,{
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUsers(users.filter(user => user.id !== userId));
+      setSelectedUsers(selectedUsers.filter(id => id !== userId));
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
   };
 
-  const handleAddOrUpdateUser = (userData) => {
-    const additionalFieldsObject = additionalFields.reduce((acc, field) => {
-      acc[field.key] = field.value;
-      return acc;
-    }, {});
+  // Función para manejar la creación de un usuario
+const handleCreateUser = async (userData) => {
+  const additionalFieldsObject = additionalFields.reduce((acc, field) => {
+    acc[field.key] = field.value;
+    return acc;
+  }, {});
 
-    const updatedUserData = {
-      ...userData,
-      additionalFields: additionalFieldsObject
-    };
+  const newUserData = {
+    email: userData.email, 
+    name: userData.name,
+    role: userData.role,
+    status: userData.status,
+    additionalFields: additionalFieldsObject,
+  
+  };
 
-    if (editingUser) {
-      setUsers(users.map(user => user.id === editingUser.id ? { ...user, ...updatedUserData } : user));
-    } else {
-      setUsers([...users, { ...updatedUserData, id: users.length + 1, dateJoined: new Date().toISOString().split('T')[0] }]);
+  const token = localStorage.getItem('token'); 
+  if (!token) {
+    console.error("Token no disponible. No estás autenticado.");
+    return;
+  }
+
+  try {
+    const response = await axios.post('http://localhost:4001/api/user', newUserData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log("Usuario creado:", response.data);
+    // Actualizar el estado de usuarios
+    setUsers([...users, response.data]);
+  } catch (error) {
+    console.error("Error creando el usuario:", error.response ? error.response.data : error.message);
+    // Mostrar un mensaje adecuado si el error es un email duplicado
+    if (error.response && error.response.data && error.response.data.error === 'El email ya está en uso') {
+      alert("Este correo electrónico ya está registrado. Intenta con otro.");
     }
+  }
+};
+
+// Función para manejar la actualización de un usuario
+const handleUpdateUser = async (userData) => {
+  const additionalFieldsObject = additionalFields.reduce((acc, field) => {
+    acc[field.key] = field.value;
+    return acc;
+  }, {});
+
+  const updatedUserData = {
+    email: userData.email,
+    name: userData.name,
+    role: userData.role,
+    status: userData.status,
+    additionalFields: additionalFieldsObject,
+  };
+
+  console.log("Datos de usuario a actualizar:", updatedUserData);
+
+  const token = localStorage.getItem('token'); 
+  if (!token) {
+    console.error("Token no disponible. No estás autenticado.");
+    return;
+  }
+
+  try {
+    const response = await axios.put(`http://localhost:4001/api/user/${editingUser._id}`, updatedUserData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log("Usuario actualizado:", response.data);
+    // Actualizar el estado de usuarios
+    setUsers(users.map(user => user._id === editingUser.id ? response.data : user));
+  } catch (error) {
+    console.error("Error actualizando el usuario:", error.response ? error.response.data : error.message);
+  }
+};
+
+// Función principal para agregar o actualizar un usuario
+const handleAddOrUpdateUser = async (userData) => {
+  setIsLoading(true);
+  try {
+    if (editingUser && editingUser._id) {
+      await handleUpdateUser(userData);
+    } else {
+      await handleCreateUser(userData);
+    }
+  } catch (error) {
+    console.error("Error al guardar el usuario:", error);
+  } finally {
+    setIsLoading(false); // Finaliza el estado de carga
     setIsAddUserOpen(false);
     setEditingUser(null);
     setAdditionalFields([]);
-  };
+  }
+};
 
   const handleMouseEnter = () => {
     if (isSoundEnabled) {
@@ -135,16 +236,18 @@ export default function Component() {
     setIsEmailModalOpen(true);
   };
 
-  const handleSubmitEmail = () => {
+  const handleSubmitEmail = async () => {
     // Aquí iría la lógica para enviar el correo
     console.log('Enviando correo a:', selectedUsers);
     console.log('Asunto:', emailSubject);
     console.log('Cuerpo:', emailBody);
+    
     setIsEmailModalOpen(false);
     setEmailSubject('');
     setEmailBody('');
     setSelectedUsers([]);
   };
+
 
   return (
     <div className="admin-container">
@@ -251,8 +354,9 @@ export default function Component() {
                     whileTap={{ scale: 0.9 }}
                     onMouseEnter={handleMouseEnter}
                     onClick={() => {
+                      console.log("ID del usuario a eliminar:", user._id);
                       handleButtonClick();
-                      handleDeleteUser(user.id);
+                      handleDeleteUser(user._id);
                     }}
                     aria-label="Eliminar usuario"
                   >
@@ -373,13 +477,13 @@ export default function Component() {
                 <motion.select
                   whileFocus={{ scale: 1.05 }}
                   name="role"
-                  defaultValue={editingUser?.role || 'User'}
+                  defaultValue={editingUser?.role || 'user'}
                   required
                   aria-label="Rol"
                 >
-                  <option value="User">Usuario</option>
-                  <option value="Editor">Editor</option>
-                  <option value="Admin">Administrador</option>
+                  <option value="user">Usuario</option>
+                  <option value="editor">Editor</option>
+                  <option value="admin">Administrador</option>
                 </motion.select>
               </div>
               <div className="input-group">
@@ -484,7 +588,7 @@ export default function Component() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onMouseEnter={handleMouseEnter}
-                onClick={handleButtonClick}
+                onClick={handleAddOrUpdateUser}
                 type="submit"
               >
                 {isLoading ? (
@@ -532,7 +636,7 @@ export default function Component() {
               <p><strong>Ubicación:</strong> {selectedUser.location}</p>
               <p><strong>Empresa:</strong> {selectedUser.company}</p>
               <p><strong>Fecha de Ingreso:</strong> {selectedUser.dateJoined}</p>
-              {Object.entries(selectedUser.additionalFields).map(([key, value]) => (
+              {selectedUser.additionalFields && Object.entries(selectedUser.additionalFields).map(([key, value]) => (
                 <p key={key}><strong>{key}:</strong> {value}</p>
               ))}
             </div>
