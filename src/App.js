@@ -12,37 +12,23 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import BlogUpload from './component/blog/subir_blog';
 import { AuthProvider } from './context';
 import ProtectedRoute from './ProtectedRoute';
-
+import Scana from './component/scana';
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <Navbar />
         <div>
           <Routes>
             <Route
               path="/"
               element={
                 <>
-                  <ElegantHeroSection />
-                  <BlogSection />
-                  <ServicesSection />
-                  <ContactForm />
+                  <Scana />
+                  
                 </>
               }
             />
-            <Route path="/blog/:id" element={<BlogPostPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/usuario" element={<Usuario />} />
-            <Route
-              path="/panel-usuario"
-              element={<ProtectedRoute element={<Panel_usuario />} />}
-            />
-            <Route
-              path="/subir-blog"
-              element={<ProtectedRoute element={<BlogUpload />} />}
-            />
+           
           </Routes>
         </div>
       </Router>
