@@ -37,26 +37,27 @@ export default function Component() {
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get('http://localhost:4001/api/user', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }); 
-        console.log('respuesta de usuarios:', response.data.users);
-        setUsers(response.data.users);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:4001/api/user', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }); 
+      console.log('respuesta de usuarios:', response.data.users);
+      setUsers(response.data.users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
-    fetchUsers();
+  useEffect(() => {
+  fetchUsers();
   }, []);
 
   const handlePageChange = (newPage) => {
@@ -83,7 +84,8 @@ export default function Component() {
           Authorization: `Bearer ${token}`,
         },
       });
-      setUsers(users.filter(user => user.id !== userId));
+      console.log('el usuario fue eliminado');
+      await fetchUsers(); // para que actualice automaticamente
       setSelectedUsers(selectedUsers.filter(id => id !== userId));
     } catch (error) {
       console.error("Error deleting user:", error);
