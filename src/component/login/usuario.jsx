@@ -104,6 +104,10 @@ const handleCreateUser = async (userData) => {
     name: userData.name,
     role: userData.role,
     status: userData.status,
+    phone: userData.phone,        
+    location: userData.location,  
+    dateJoined: userData.dateJoined, 
+    company: userData.company,
     additionalFields: additionalFieldsObject,
   
   };
@@ -162,8 +166,8 @@ const handleUpdateUser = async (userData) => {
       },
     });
     console.log("Usuario actualizado:", response.data);
-    // Actualizar el estado de usuarios
-    setUsers(users.map(user => user._id === editingUser.id ? response.data : user));
+    // Refrescar la lista de usuarios después de la actualización
+    await fetchUsers();
   } catch (error) {
     console.error("Error actualizando el usuario:", error.response ? error.response.data : error.message);
   }
@@ -231,24 +235,40 @@ const handleAddOrUpdateUser = async (userData) => {
     setSelectAll(!selectAll);
   };
 
-  const handleSendEmail = (userId = null) => {
-    if (userId) {
-      setSelectedUsers([userId]);
-    }
-    setIsEmailModalOpen(true);
-  };
+  const handleSendEmail = (userId) => {
+    const selectedUser = users.find(user => user._id === userId);
+  setEditingUser(selectedUser); 
+  setIsEmailModalOpen(true); 
+};
 
   const handleSubmitEmail = async () => {
-    // Aquí iría la lógica para enviar el correo
-    console.log('Enviando correo a:', selectedUsers);
-    console.log('Asunto:', emailSubject);
-    console.log('Cuerpo:', emailBody);
+     const emailData = {
+      userId: editingUser?._id,
+      subject: emailSubject,
+      text: emailBody
+     };
+
+     console.log('datos de envios:', emailData);
     
-    setIsEmailModalOpen(false);
-    setEmailSubject('');
-    setEmailBody('');
-    setSelectedUsers([]);
-  };
+    try {
+      const token = localStorage.getItem('token'); 
+      if (!token) {
+        console.error('No se encontró token. Debes iniciar sesión.');
+        return;
+      }
+      
+      const response = await axios.post('http://localhost:4001/api/send-email', emailData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log('Correo enviado exitosamente:', response.data);
+      setIsEmailModalOpen(false);
+  } catch (error) {
+      console.error('Error al enviar el correo:', error);
+  }
+};
 
 
   return (
@@ -370,7 +390,7 @@ const handleAddOrUpdateUser = async (userData) => {
                     onMouseEnter={handleMouseEnter}
                     onClick={() => {
                       handleButtonClick();
-                      handleSendEmail(user.id);
+                      handleSendEmail(user._id);
                     }}
                     aria-label="Enviar correo al usuario"
                   >
@@ -416,7 +436,9 @@ const handleAddOrUpdateUser = async (userData) => {
             onMouseEnter={handleMouseEnter}
             onClick={() => {
               handleButtonClick();
-              handleSendEmail();
+              if (selectedUsers.length > 0) {
+                handleSendEmail(selectedUsers[0]); 
+            }
             }}
             disabled={selectedUsers.length === 0}
           >
