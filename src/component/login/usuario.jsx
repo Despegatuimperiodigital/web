@@ -92,100 +92,58 @@ export default function Component() {
     }
   };
 
-  // Función para manejar la creación de un usuario
-const handleCreateUser = async (userData) => {
-  const additionalFieldsObject = additionalFields.reduce((acc, field) => {
-    acc[field.key] = field.value;
-    return acc;
-  }, {});
-
-  const newUserData = {
-    email: userData.email, 
-    name: userData.name,
-    role: userData.role,
-    status: userData.status,
-    phone: userData.phone,        
-    location: userData.location,  
-    dateJoined: userData.dateJoined, 
-    company: userData.company,
-    additionalFields: additionalFieldsObject,
-  
-  };
-
-  const token = localStorage.getItem('token'); 
-  if (!token) {
-    console.error("Token no disponible. No estás autenticado.");
-    return;
-  }
-
-  try {
-    const response = await axios.post('http://localhost:4001/api/user', newUserData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log("Usuario creado:", response.data);
-    // Actualizar el estado de usuarios
-    setUsers([...users, response.data]);
-  } catch (error) {
-    console.error("Error creando el usuario:", error.response ? error.response.data : error.message);
-    // Mostrar un mensaje adecuado si el error es un email duplicado
-    if (error.response && error.response.data && error.response.data.error === 'El email ya está en uso') {
-      alert("Este correo electrónico ya está registrado. Intenta con otro.");
-    }
-  }
-};
-
-// Función para manejar la actualización de un usuario
-const handleUpdateUser = async (userData) => {
-  const additionalFieldsObject = additionalFields.reduce((acc, field) => {
-    acc[field.key] = field.value;
-    return acc;
-  }, {});
-
-  const updatedUserData = {
-    email: userData.email,
-    name: userData.name,
-    role: userData.role,
-    status: userData.status,
-    additionalFields: additionalFieldsObject,
-  };
-
-  console.log("Datos de usuario a actualizar:", updatedUserData);
-
-  const token = localStorage.getItem('token'); 
-  if (!token) {
-    console.error("Token no disponible. No estás autenticado.");
-    return;
-  }
-
-  try {
-    const response = await axios.put(`http://localhost:4001/api/user/${editingUser._id}`, updatedUserData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log("Usuario actualizado:", response.data);
-    // Refrescar la lista de usuarios después de la actualización
-    await fetchUsers();
-  } catch (error) {
-    console.error("Error actualizando el usuario:", error.response ? error.response.data : error.message);
-  }
-};
-
+ 
 // Función principal para agregar o actualizar un usuario
 const handleAddOrUpdateUser = async (userData) => {
   setIsLoading(true);
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.error("Token no disponible. No estás autenticado.");
+    setIsLoading(false);
+    return;
+  }
+
   try {
+    // Crear objeto con campos adicionales
+    const additionalFieldsObject = additionalFields.reduce((acc, field) => {
+      acc[field.key] = field.value;
+      return acc;
+    }, {});
+
+    // Datos completos del usuario con campos adicionales
+    const completeUserData = {
+      ...userData,
+      additionalFields: additionalFieldsObject,
+    };
+
+    let response;
     if (editingUser && editingUser._id) {
-      await handleUpdateUser(userData);
+      // Actualizar usuario existente
+      response = await axios.put(
+        `http://localhost:4001/api/user/${editingUser._id}`,
+        completeUserData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("Usuario actualizado:", response.data);
     } else {
-      await handleCreateUser(userData);
+      // Crear nuevo usuario
+      response = await axios.post(
+        'http://localhost:4001/api/user',
+        completeUserData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      console.log("Usuario creado:", response.data);
+      setUsers([...users, response.data]); // actualiza lista de usuarios
     }
+
+    await fetchUsers(); // recarga la lista de usuarios
   } catch (error) {
-    console.error("Error al guardar el usuario:", error);
+    console.error("Error al guardar el usuario:", error.response ? error.response.data : error.message);
+    if (error.response?.data?.error === 'El email ya está en uso') {
+      alert("Este correo electrónico ya está registrado. Intenta con otro.");
+    }
   } finally {
-    setIsLoading(false); // Finaliza el estado de carga
+    setIsLoading(false);
     setIsAddUserOpen(false);
     setEditingUser(null);
     setAdditionalFields([]);
@@ -612,7 +570,7 @@ const handleAddOrUpdateUser = async (userData) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onMouseEnter={handleMouseEnter}
-                onClick={handleAddOrUpdateUser}
+                // onClick={handleAddOrUpdateUser}
                 type="submit"
               >
                 {isLoading ? (
